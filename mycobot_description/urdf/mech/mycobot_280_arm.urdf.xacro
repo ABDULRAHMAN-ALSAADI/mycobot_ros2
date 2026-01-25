@@ -1,19 +1,22 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-  <xacro:property name="joint_effort" value="56.0"/>
-  <xacro:property name="joint_velocity" value="2.792527"/>
-  <xacro:property name="joint_damping" value="0.0"/>
-  <xacro:property name="joint_friction" value="0.0"/>
-
+  <xacro:property name="joint_effort" value="56.0"/> <!-- This is the maximum force the joint can exert which is the maxmum torque the joint can apply-->
+  <xacro:property name="joint_velocity" value="2.792527"/> <!-- This is the maximum joint velocity in raians per second-->
+  <xacro:property name="joint_damping" value="0.0"/> <!-- Joint dampping coefficient -->
+  <xacro:property name="joint_friction" value="0.0"/> <!-- Joint friction coefficient-->
+  
+  <!--here we got the masses for each links of our robotic arm  -->
   <xacro:property name="link1_mass" value="0.12"/>
   <xacro:property name="link2_mass" value="0.19"/>
   <xacro:property name="link3_mass" value="0.16"/>
   <xacro:property name="link4_mass" value="0.124"/>
   <xacro:property name="link5_mass" value="0.11"/>
   <xacro:property name="link6_mass" value="0.0739"/>
-  <xacro:property name="flange_mass" value="0.035"/>
+  <xacro:property name="flange_mass" value="0.035"/> <!-- This the last peiese the one that conected to the last link and this one is the one that conect the robotic arm with the gripper-->
 
+  <!-- A macro for the link_inertial and it's a plate for defining the inertial properties of links and we put it here in a macro so we don't repeat this block right here for every single link-->
+  <!-- The purpose of Shakro is to make sure that your URDF files stay nice and maintainable-->
   <xacro:macro name="link_inertial" params="mass ixx iyy izz">
     <inertial>
       <origin xyz="0 0 0.0" rpy="0 0 0"/>
@@ -24,7 +27,7 @@
         izz="${izz}"/>
     </inertial>
   </xacro:macro>
-
+  <!-- This xacro macro handle the visual properties. Specifically how will each link appear in gazebo simulation.-->
   <xacro:macro name="material_visual" params="ref_link ambient diffuse specular">
     <gazebo reference="${ref_link}">
       <visual>
@@ -37,18 +40,20 @@
     </gazebo>
   </xacro:macro>
 
+  <!-- This xacro macro is the main robotic arm definition and this macros is called my_cobot_280_arm and it accepts these parameters the base_link, flange_link, prefix and origin -->
   <xacro:macro name="mycobot_280_arm" params="base_link flange_link prefix *origin">
 
-    <link name="${prefix}link1">
-      <xacro:link_inertial mass="${link1_mass}" ixx="0.000148" iyy="0.000148" izz="0.000096"/>
-      <visual>
+    <!-- So for each link form link1 through link6 plus the flang -->
+    <link name="${prefix}link1"> <!-- We define the link name -->
+      <xacro:link_inertial mass="${link1_mass}" ixx="0.000148" iyy="0.000148" izz="0.000096"/> <!-- The physical properties using link inertial macros-->
+      <visual> <!-- The visula properties and we tag the appropriate mesh file to define how this will actually look-->
         <geometry>
           <mesh filename="file://$(find mycobot_description)/meshes/mycobot_280/visual/link1.dae"/>
         </geometry>
         <origin xyz="0.0 0 0" rpy="0 0 ${-pi/2}"/>
       </visual>
       <collision>
-        <geometry>
+        <geometry> <!-- And then simplify box geometry length,width and height for actual collision detection-->
           <box size="0.08 0.12 0.075"/>
         </geometry>
         <origin xyz="0.0 -0.01 0.034" rpy="0 0 0"/>
@@ -151,19 +156,22 @@
       </collision>
     </link>
 
-    <joint name="${prefix}${base_link}_to_${prefix}link1" type="fixed">
-      <parent link="${prefix}${base_link}"/>
-      <child link="${prefix}link1"/>
+
+    
+    <!-- Now we get to the joints and joint conect all those link together-->
+    <joint name="${prefix}${base_link}_to_${prefix}link1" type="fixed"> <!-- This is the name of the joint and it tell us what this joint conect and the type of the joint is fixed because there's no motion in the base linke-->
+      <parent link="${prefix}${base_link}"/> <!-- Is the link that have the joint we want to conect it with other link-->
+      <child link="${prefix}link1"/> <!-- Is the link we want it to conect it with the link that have the joint -->
       <xacro:insert_block name="origin"/>
     </joint>
 
-    <joint name="${prefix}link1_to_${prefix}link2" type="revolute">
-      <axis xyz="0 0 1"/>
-      <limit effort="${joint_effort}" lower="-2.879793" upper="2.879793" velocity="${joint_velocity}"/>
+    <joint name="${prefix}link1_to_${prefix}link2" type="revolute"> <!-- But in this joint the type is revolute because it rotate so it's not fixed-->
+      <axis xyz="0 0 1"/> <!-- This define the axis of rotation the position of the rotation the joint will do in which axises and here mean we have rotation around the Z axis of the parent coordinate frame -->
+      <limit effort="${joint_effort}" lower="-2.879793" upper="2.879793" velocity="${joint_velocity}"/> <!-- This define the motion limits and this include the joint_effort which is the maximum torque the joint can apply. And we got the lower and upper which are the range of allowerd angles in radians and last we have the maximum angular velocity-->
       <parent link="${prefix}link1"/>
       <child link="${prefix}link2"/>
-      <origin xyz="0 0 0.13156" rpy="0 0 ${pi/2}"/>
-      <dynamics damping="${joint_damping}" friction="${joint_friction}"/>
+      <origin xyz="0 0 0.13156" rpy="0 0 ${pi/2}"/> <!-- This is the origin the position and orientation of the joint relative to the parent link-->
+      <dynamics damping="${joint_damping}" friction="${joint_friction}"/> <!-- Here we have damping and damping is the parameter measured in Newton meters per radian per second. And this determines how much the joint moving at a certain speed -->
     </joint>
 
     <joint name="${prefix}link2_to_${prefix}link3" type="revolute">
@@ -211,6 +219,8 @@
       <dynamics damping="${joint_damping}" friction="${joint_friction}"/>
     </joint>
 
+
+    <!-- Here we set the visual properties for each link and how it should look in Gazebo. 0.5 stand for color gray and 1 stand for color white.-->
     <xacro:material_visual ref_link="${prefix}link1" ambient="0.5 0.5 0.5 1" diffuse="0.5 0.5 0.5 1" specular="0.5 0.5 0.5 1"/>
     <xacro:material_visual ref_link="${prefix}link2" ambient="1 1 1 1" diffuse="1 1 1 1" specular="1 1 1 1"/>
     <xacro:material_visual ref_link="${prefix}link3" ambient="1 1 1 1" diffuse="1 1 1 1" specular="1 1 1 1"/>

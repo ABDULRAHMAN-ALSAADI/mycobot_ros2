@@ -1,16 +1,24 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="mycobot_280">
+    
+    <!-- This modular approach make it easier to swap our different bases or grippers or creaet multiple robot with different configurations or if we going to create a humanoid robot and we want to have a left arm and right arm
+    it's very modular and very flexible and allows us to do that-->
+
+    <!-- THIS FILES IS THE FILE THAT BRINGS ALL THOSE COMPONENETS TOGETHER. -->
     <xacro:arg name="robot_name" default="mycobot_280"/>
-    <xacro:arg name="add_world" default="true"/>
-    <xacro:arg name="base_link" default="base_link"/>
-    <xacro:arg name="base_type" default="g_shape"/>
-    <xacro:arg name="flange_link" default="link6_flange"/>
-    <xacro:arg name="gripper_type" default="adaptive_gripper"/>
-    <xacro:arg name="prefix" default=""/>
+    <xacro:arg name="add_world" default="true"/> <!-- This for adding a world link for our URDF-->
+    <xacro:arg name="base_link" default="base_link"/> <!-- The name of the base link of the robotic arm-->
+    <xacro:arg name="base_type" default="g_shape"/> <!-- The type of the base to use-->
+    <xacro:arg name="flange_link" default="link6_flange"/> <!-- The name of the endeffector the end link of the arm-->
+    <xacro:arg name="gripper_type" default="adaptive_gripper"/> <!-- This the name of the gripper we are using-->
+    <xacro:arg name="prefix" default=""/> <!-- This going to be blank but if you deal with dual arm robot link in humaind robot you can name it because we need one for the left arm and one for the right arm-->
     <xacro:arg name="use_camera" default="false"/>
     <xacro:arg name="use_gazebo" default="false"/>
-    <xacro:arg name="use_gripper" default="true"/>
+    <xacro:arg name="use_gripper" default="true"/> <!-- Here you can remove the gripper if you don't want to use it in the simulation-->
 
+
+    <!-- This say if the add_world parameter is true we need to create a world link to conect our robot to it. And that's like a vertual joint not like real physical joint. 
+     it's just a vertual joint between the robot and the base link of the robotic arm. And it's connected at the origin of the world, The base link is conected to the origin of the world. -->
     <xacro:if value="$(arg add_world)">
       <link name="world"/>
       <joint name="$(arg prefix)virtual_joint" type="fixed">
@@ -20,6 +28,7 @@
       </joint>
     </xacro:if>
 
+    <!-- Here we handle the base the g_shape the gray platform to which we conect our robot to. We need to include it right here. But if you don't want this g_shape base so you will not need to include it. -->
     <xacro:property name="current_base" value="$(arg base_type)"/>
     <xacro:if value="${current_base == 'g_shape'}">
         <xacro:include filename="$(find mycobot_description)/urdf/mech/g_shape_base_v2_0.urdf.xacro"/>
@@ -35,7 +44,8 @@
       prefix="$(arg prefix)">
       <origin xyz="0 0 0" rpy="0 0 0"/>
     </xacro:mycobot_280_arm>
-
+    
+    <!-- This is the gripper we added it here becaue we are using a gripper-->
     <xacro:if value="$(arg use_gripper)">
         <xacro:property name="current_gripper" value="$(arg gripper_type)"/>
         <xacro:if value="${current_gripper == 'adaptive_gripper'}">
@@ -48,17 +58,6 @@
         </xacro:if>
     </xacro:if>
 
-    <xacro:include filename="$(find mycobot_description)/urdf/control/gazebo_sim_ros2_control.urdf.xacro" />
-    <xacro:load_gazebo_sim_ros2_control_plugin
-      robot_name="$(arg robot_name)"
-      use_gazebo="$(arg use_gazebo)"/>
-
-    <xacro:include filename="$(find mycobot_description)/urdf/control/mycobot_280_ros2_control.urdf.xacro" />
-    <xacro:mycobot_ros2_control
-      prefix="$(arg prefix)"
-      flange_link="$(arg flange_link)"
-      use_gazebo="$(arg use_gazebo)"/>
-
-    <xacro:include filename="$(find mycobot_description)/urdf/sensors/intel_rgbd_cam_d435.urdf.xacro"/>
-
+   
+    
 </robot>

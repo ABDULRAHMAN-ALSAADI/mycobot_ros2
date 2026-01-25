@@ -1,16 +1,27 @@
-<?xml version="1.0"?>
-<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+<?xml version="1.0"?> <!-- XML declaration -->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro"> <!-- Robot tag and this two line in any stander URDF files
+   and the Xacro here tells us we are using the xacro macro for more maintainable robot descriptions-->
+  <!--What xacro do is reduce the amoount of code you need to write in each URDF file. It's like a macro
+  consolidating all the code into really tiny modular reusable chunks.-->
 
-  <xacro:property name="joint_effort" value="56.0"/>
-  <xacro:property name="joint_velocity" value="2.792527"/>
+  <!--NOTE:::-->
+  <!-- THIS OVER ALL STRUCTURE, ALL THE URDF FILES DOES IS IT CREATES A GRIPPER_BASE AND A GRIPPER_CONTROLLER WITH SIX SYNCHRONIZED MOVING PARTS IT'S GOT 3 ON EACH SIDE -->
+  <!-- And out gripper movment is controlled by our single main joint the gripper controller-->
+  <!--  -->
+
+  <!--These are the physical limitation that we're putting on our grippers movement. -->
+  <xacro:property name="joint_effort" value="56.0"/> <!-- How much force our joints can exert which is the maxmum torque the joint can apply-->
+  <xacro:property name="joint_velocity" value="2.792527"/> <!-- How fast the joints will move and we use radians per second-->
   <xacro:property name="joint_damping" value="0.0"/>
   <xacro:property name="joint_friction" value="0.0"/>
 
-  <xacro:property name="gripper_link_mass" value="0.007"/>
+  <!-- Here we define some mass and inertial properties and these values are very important for accurate physics simulation -->
+  <xacro:property name="gripper_link_mass" value="0.007"/> <!-- How much mass using kilograms -->
   <xacro:property name="gripper_link_ixx" value="1e-6"/>
   <xacro:property name="gripper_link_iyy" value="1e-6"/>
   <xacro:property name="gripper_link_izz" value="1e-6"/>
 
+  <!-- This is a reusable template for the inertial properties that we use multiple times throughout the robot -->
   <xacro:macro name="gripper_link_inertial">
     <inertial>
       <origin xyz="0 0 0.0" rpy="0 0 0"/>
@@ -22,36 +33,55 @@
     </inertial>
   </xacro:macro>
 
+  <!-- Here we have the main gripper definition and this macro take 3 parameters parent,prefix and origin-->
+  <!-- Parent is what the gripper attaches to on your robot-->
+  <!-- Prefix is a namespace prefix for unique naming. And this come in handy if you've got many different grippers or robots on your amr like gripper for a left arm and one for the right arm prefix left and prefix right -->
+  <!-- origin is where the girpper actually mounts-->
   <xacro:macro name="adaptive_gripper" params="parent prefix *origin">
 
+    <!-- Here we start with the links and as we know any robot is a collection of links and joints and links are the hard rigig pieces and joints are the movable pieces -->
+    <!-- And the first link we define here is the gripper base-->
+    <!-- And as we can see an link has three highlevel parts inertial, Visual and Collision-->
     <link name="${prefix}gripper_base">
+      <!-- First bluck is inertial and it defines the physical properties of the gripper base-->
       <inertial>
-        <origin xyz="0 0 0.0" rpy="0 0 0"/>
-        <mass value="0.07"/>
-        <inertia
+        <origin xyz="0 0 0.0" rpy="0 0 0"/> <!-- Like origin and where it's conect-->
+        <mass value="0.07"/> <!-- And its mass (kilograms)-->
+        <inertia 
           ixx="0.000010725" ixy="0.0" ixz="0.0"
           iyy="0.000014392" iyz="0.0"
           izz="0.000018517"/>
-      </inertial>
+      </inertial> <!-- And it's inertia-->
+      <!-- The second bluck is visual and it defines how the actual grippper looks   -->
       <visual>
         <geometry>
           <mesh filename="file://$(find mycobot_description)/meshes/adaptive_gripper/visual/gripper_base.dae"/>
+          <!--  This mesh file the dae file create the realistic appearance for the robot-->
         </geometry>
         <origin xyz="0.0 0.0 -0.012" rpy="0 0 0"/>
       </visual>
+      <!--The 3rd bluck is the collision and we're using just a simplified shape for the collision, a box. we're modeling the gripper base as an actual box-->
+      <!-- Why we do that? because it's much simpler for physics engines to be able to handle a box geometry than a complicated mesh geometry. it's much more lightweight on different physics engines like Gazebo-->
       <collision>
         <geometry>
+          <!-- With the length, width and the height of the box-->
           <box size="0.065 0.025 0.025"/>
+          <!-- But collision uses simple geometic shapes for very efficient collision checking. -->
         </geometry>
         <origin xyz="0.0 0.0 0.0" rpy="0 0 0"/>
       </collision>
+      <!--So in the visual aspect we use the mesh file because the look but for the basic collision we use box or sphere to make it easier and quicker for the simulation engines to decide if two robots are colliding or not-->
     </link>
 
+    <!-- Here after our first link we see our first joint-->
+    <!-- And this the joint that conect the parent which is the endeffector of the arm the last piece they often call it the Flange where the gripper actually conects to the robotic arm. -->
+    <!-- And this parent conected to the gribber_base and it's fixed because we normally screw on the gripper base onto the robotic arm. -->
     <joint name="${prefix}${parent}_to_${prefix}gripper_base" type="fixed">
       <parent link="${prefix}${parent}"/>
       <child link="${prefix}gripper_base"/>
       <xacro:insert_block name="origin"/>
     </joint>
+
 
     <link name="${prefix}gripper_left1">
       <xacro:gripper_link_inertial/>
@@ -149,6 +179,8 @@
       </collision>
     </link>
 
+    <!-- This joint is the main controll point of the gripper basically it's the motor that mkae the gripper open and close or do it job-->
+    <!-- So the gripper controller will have a joint(a motor) that'll move it and then they will be other links there like the fingers gripper_left2 and so on that will mimic the behavior the movement that occurs at the gripper controller-->
     <joint name="${prefix}gripper_controller" type="revolute">
       <axis xyz="0 0 1"/>
       <limit effort="${joint_effort}" lower="-0.7" upper="0.15" velocity="${joint_velocity}"/>
@@ -157,15 +189,18 @@
       <origin xyz="-0.012 0.005 0" rpy="0 0 0"/>
       <dynamics damping="${joint_damping}" friction="${joint_friction}"/>
     </joint>
-
+    <!-- And all the other gripper joint are designed to mimic the gripper controller-->
     <joint name="${prefix}gripper_base_to_${prefix}gripper_left2" type="revolute">
-      <axis xyz="0 0 1"/>
-      <limit effort="${joint_effort}" lower="-0.8" upper="0.5" velocity="${joint_velocity}"/>
-      <parent link="${prefix}gripper_base"/>
-      <child link="${prefix}gripper_left2"/>
-      <origin xyz="-0.005 0.027 0" rpy="0 0 0"/>
+      <axis xyz="0 0 1"/> <!-- This define which direction the joint will rotates-->
+      <limit effort="${joint_effort}" lower="-0.8" upper="0.5" velocity="${joint_velocity}"/> <!-- This defines how far the joint can move in radians. And you got joint_velocity which define how fast it can move in radians per second. And all this was defined up in our parameters section-->
+      <parent link="${prefix}gripper_base"/> <!-- This show what parent part is conected to-->
+      <child link="${prefix}gripper_left2"/> <!-- This the child of the joint which is the part that conected to the parent-->
+      <origin xyz="-0.005 0.027 0" rpy="0 0 0"/> <!-- This defines where the joint is located relative to its parent the gripper_base-->
+      <!-- We define the name of the joint that we want to mimic for this paricaular joint and in this case we mimic the gripper controller and we have a multiplier which scales the movement and here it's going to be 1.0 
+       so if you move 5 radians on the gripper controller you will move 5 radians on the gripper base to gripper_left2 joint. -->
       <mimic joint="${prefix}gripper_controller" multiplier="1.0" offset="0"/>
       <dynamics damping="${joint_damping}" friction="${joint_friction}"/>
+      <!-- And this is the same structured for all the other joints-->
     </joint>
 
     <joint name="${prefix}gripper_left3_to_${prefix}gripper_left1" type="revolute">
@@ -174,7 +209,7 @@
       <parent link="${prefix}gripper_left3"/>
       <child link="${prefix}gripper_left1"/>
       <origin xyz="-0.027 0.016 0" rpy="0 0 0"/>
-      <mimic joint="${prefix}gripper_controller" multiplier="-1.0" offset="0"/>
+      <mimic joint="${prefix}gripper_controller" multiplier="-1.0" offset="0"/> <!-- for this one if you move 5 radians on the gripper controller you will move -5 radians on the gripper base to gripper_left1 joint.  -->
       <dynamics damping="${joint_damping}" friction="${joint_friction}"/>
     </joint>
 
@@ -208,9 +243,10 @@
       <dynamics damping="${joint_damping}" friction="${joint_friction}"/>
     </joint>
 
+    <!-- This defines gazebo specific element. And gazebo our simulation engine  -->
     <gazebo reference="${prefix}gripper_base">
-      <visual>
-        <material>
+      <visual> <!-- We define here how the gripper should look and appear in Gazebo simulation-->
+        <material> <!-- And this corresponds to a color for the gripper-->
           <ambient>1 1 1 1</ambient>
           <diffuse>1 1 1 1</diffuse>
           <specular>1 1 1 1</specular>

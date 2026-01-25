@@ -1,32 +1,41 @@
 <?xml version="1.0" ?>
 <robot xmlns:xacro="http://wiki.ros.org/xacro">
+    
+    <!-- THIS FILE IS JUST DESCRBING A STATIC BASE PLACE -->
+    
+    <!-- This file define a single macro called g_shape_base and this takes 2 parameters the base_link and a prefix for unique naming-->
     <xacro:macro name="g_shape_base" params="base_link prefix">
+       <!-- In this macro we define a single link with standard URDF components. The inertial, visual and collision-->
         <link name="${prefix}${base_link}">
+            
             <inertial>
-                <origin xyz="0 0 0.0" rpy="0 0 0"/>
-                <mass value="0.33"/>
+                <origin xyz="0 0 0.0" rpy="0 0 0"/> <!-- the origin the position XYZ and the orientation roll pitch and yaw-->
+                <mass value="0.33"/> <!-- The mass of the link in kilograms-->
                 <inertia
                     ixx="0.000784" ixy="0.0" ixz="0.0"
                     iyy="0.000867" iyz="0.0"
                     izz="0.001598"/>
-            </inertial>
-            <visual>
+            </inertial> <!-- The inertia describe how the mass is distributed. it impact how the link resists rotational motion-->
+            
+            <visual> <!-- A visula componnet define the gripper base how should it look like.-->
                 <geometry>
                     <mesh filename="file://$(find mycobot_description)/meshes/g_shape_base_v2_0/visual/base_link.dae"/>
                 </geometry>
-                <origin xyz="0.0 0 -0.03" rpy="0 0 ${pi/2}"/>
+                <origin xyz="0.0 0 -0.03" rpy="0 0 ${pi/2}"/> <!-- This is the origin of the visual component of this link which defines the position and the orientation of the visual representation with offset a little bit -0.03 to make it nice and pretty in visualiztion-->
             </visual>
-            <collision>
-                <geometry>
+            
+            <collision> <!-- Define the geometry that is used to detected if the particular link collides with an object or another part of the robotic arm in gazebo environment-->
+                <geometry> <!-- we define it as a baic box shape length,width and height and it's in meters -->
                     <box size="0.105 0.14 0.02"/>
                 </geometry>
-                <origin xyz="0.0 0.0 -0.015" rpy="0 0 0"/>
+                <origin xyz="0.0 0.0 -0.015" rpy="0 0 0"/> <!-- Here the origin which it aids in how we position that collision geometry within the link. -->
             </collision>
         </link>
 
+        <!-- This gazebo section to define how the base appears in simulation.-->
         <gazebo reference="${prefix}${base_link}">
             <visual>
-                <material>
+                <material> <!-- And this number define the color and it's gray -->
                     <ambient>0.5 0.5 0.5 1</ambient>
                     <diffuse>0.5 0.5 0.5 1</diffuse>
                     <specular>0.5 0.5 0.5 1</specular>
@@ -34,4 +43,5 @@
             </visual>
         </gazebo>
     </xacro:macro>
+
 </robot>
