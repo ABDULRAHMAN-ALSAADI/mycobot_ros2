@@ -16,8 +16,14 @@ This repository contains a simulation of the **Elephant Robotics MyCobot 280** r
 ## Screenshot
 
 
-![MyCobot 280 RViz Simulation](screenshots/<img width="1349" height="696" alt="Screenshot from 2026-01-25 18-21-14" src="https://github.com/user-attachments/assets/71ada434-8f26-40c6-b8e6-46684d2e6336" />
-)
+<img width="1349" height="696" alt="Screenshot from 2026-01-25 18-21-14" src="https://github.com/user-attachments/assets/2197c351-dbf1-4053-8069-e251b9e02023" />
+
+<img width="1349" height="696" alt="Screenshot from 2026-01-25 18-22-28" src="https://github.com/user-attachments/assets/2dbaba7e-5934-4fc3-80ed-dc80afe9d188" />
+
+<img width="1349" height="696" alt="Screenshot from 2026-01-25 18-22-48" src="https://github.com/user-attachments/assets/3aaa20c6-f034-4f15-bae8-c3fd406c7ed4" />
+
+<img width="1349" height="696" alt="Screenshot from 2026-01-25 18-22-57" src="https://github.com/user-attachments/assets/c8d7ba61-1399-498e-8c7d-3025cc68ae69" />
+
 
 ## Acknowledgements
 - Elephant Robotics
